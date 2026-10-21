@@ -2,7 +2,9 @@
 
 [Open the app](https://jouwdan.github.io/roomba-matter/) · [Build / deploy status](https://github.com/jouwdan/roomba-matter/actions/workflows/pages.yml) · [Model evidence](COMPATIBILITY.md)
 
-A small, browser-based tool that asks a Roomba for a **Matter setup code over Bluetooth**. Use the code in your Matter home app when the Roomba app does not offer its Matter setup menu. **Testers on other models and firmware are welcome:** there is no model or firmware allowlist.
+A browser-based helper for **local Matter control of newer Roombas that use the Roomba Home app**. It gets a **Matter setup code over Bluetooth**, so you can add a Matter-capable robot to Home Assistant, Apple Home, or Google Home when the Roomba app does not offer its Matter setup menu.
+
+Once paired, your Matter controller exchanges commands and status with the robot over your local network, **without relying on iRobot's cloud API for that control**. The robot must already be set up on Wi-Fi and have Matter-capable firmware; this helper does not install Matter support or replace initial robot setup. **Testers on other models and firmware are welcome:** there is no model or firmware allowlist.
 
 No Roomba account or cloud password is required. There is no backend, analytics, or upload of robot information or setup codes.
 
@@ -17,6 +19,10 @@ If your robot already works in one Matter home, use that home's **Share device /
 The helper requires an acknowledgement and fresh physical button confirmation, sends the setup command at most once per session, and never automatically retries. Cancel stops this page from continuing, but cannot undo a command already sent to the robot.
 
 ## Tested hardware and experimental compatibility
+
+The intended audience is owners of newer robots using **Roomba Home**. [iRobot's app guide](https://www.irobot.ie/en_IE/irobot-home-app.html) lists the 100, 200, Plus 400, Plus 500 and Max 705 series sold after March 2025 for that app. **App compatibility does not guarantee Matter support or compatibility with this helper.**
+
+Technical naming: this app generation is often called **Prime**, after its Android package ID, [`com.irobot.home.prime`](https://play.google.com/store/apps/details?id=com.irobot.home.prime).
 
 | Model | Firmware | Status |
 | --- | --- | --- |

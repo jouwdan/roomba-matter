@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Experimental Roomba Matter setup over Bluetooth. Testers welcome on other models and firmware. No account, cloud credentials, or uploads.">
+  <meta name="description" content="Enable local Matter control for compatible newer Roombas using the Roomba Home app. Get a setup code over Bluetooth; control locally without iRobot's cloud API.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'">
   <title>Roomba Matter Helper</title>
   <link rel="stylesheet" href="style.css">
@@ -13,10 +13,11 @@
 <body>
   <main>
     <header><span class="mark" aria-hidden="true">◉</span><span>Roomba Matter Helper</span><a href="https://github.com/jouwdan/roomba-matter" rel="noreferrer">Source ↗</a></header>
-    <p class="eyebrow">LOCAL BLUETOOTH SETUP · EXPERIMENTAL</p>
-    <h1>Your Roomba.<br>Your smart home.</h1>
-    <p class="intro">Get a Matter setup code, then add your robot in Home Assistant, Apple Home, or Google Home.</p>
-    <div class="compatibility"><strong>Testers welcome on other models and firmware</strong><br>Verified native setup: Max 705 Vac · firmware 9.3.6 / I3.8.149<br><small>No model or firmware allowlist. Your robot must implement the required Bluetooth Matter setup flow. Other models and the browser port still need hardware testing.</small></div>
+    <p class="eyebrow">LOCAL MATTER CONTROL · EXPERIMENTAL</p>
+    <h1>Your Roomba.<br>Locally controlled.</h1>
+    <p class="intro">For newer Roombas using the <strong>Roomba Home app</strong>. Get a Matter setup code over Bluetooth, then add your compatible robot to Home Assistant, Apple Home, or Google Home.</p>
+    <p class="intro">Once paired, Matter commands and status stay on your local network, without relying on iRobot’s cloud API for that control.</p>
+    <div class="compatibility"><strong>Matter-capable firmware required · Testers welcome</strong><br>Verified native setup: Max 705 Vac · firmware 9.3.6 / I3.8.149<br><small>Using the Roomba Home app does not guarantee Matter support. No model or firmware allowlist. Your robot must implement the required Bluetooth Matter setup flow. Other models and the browser port still need hardware testing.</small></div>
     <section id="unsupported" class="notice" hidden>
       <h2>This browser can’t connect to Bluetooth devices.</h2>
       <p>On a Mac, Windows PC, or Android phone, open this page in Chrome or Edge. On iPhone or iPad, use <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" rel="noreferrer">Bluefy</a>, a browser with Bluetooth support.</p>
@@ -25,7 +26,7 @@
     <section id="insecure" class="notice" hidden><h2>Open the HTTPS version.</h2><p>Bluetooth access requires a secure page. For local development, use localhost on this computer.</p></section>
     <section class="card">
       <div class="step-heading"><span class="step">1</span><h2>Connect to your Roomba</h2></div>
-      <p>Keep the robot powered on and nearby. Close the Roomba app, then choose your iRobot / Roomba in the Bluetooth picker.</p>
+      <p>Your robot should already be set up on home Wi-Fi. Keep it powered on and nearby. Close the Roomba Home app, then choose your iRobot / Roomba in the Bluetooth picker.</p>
       <button id="connect" class="primary">Choose Roomba</button>
       <p id="identity" class="subtle" hidden></p>
     </section>
