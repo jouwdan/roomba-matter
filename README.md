@@ -2,7 +2,7 @@
 
 [Open the app](https://jouwdan.github.io/roomba-matter/) · [Build / deploy status](https://github.com/jouwdan/roomba-matter/actions/workflows/pages.yml) · [Model evidence](COMPATIBILITY.md)
 
-A small, browser-based tool that asks a supported Roomba for a **Matter setup code over Bluetooth**. Use the code in your Matter home app when the Roomba app does not offer its Matter setup menu.
+A small, browser-based tool that asks a Roomba for a **Matter setup code over Bluetooth**. Use the code in your Matter home app when the Roomba app does not offer its Matter setup menu. **Testers on other models and firmware are welcome:** there is no model or firmware allowlist.
 
 No Roomba account or cloud password is required. There is no backend, analytics, or upload of robot information or setup codes.
 
@@ -16,20 +16,20 @@ If your robot already works in one Matter home, use that home's **Share device /
 
 The helper requires an acknowledgement and fresh physical button confirmation, sends the setup command at most once per session, and never automatically retries. Cancel stops this page from continuing, but cannot undo a command already sent to the robot.
 
-## Supported robot
+## Tested hardware and experimental compatibility
 
 | Model | Firmware | Status |
 | --- | --- | --- |
 | Roomba Max 705 Vac, vacuum-only model | `p25-705+9.3.6+I3.8.149` | Native BLE sequence and HA pairing verified; browser hardware test pending |
-| Other models / firmware | Any | Blocked before control writes |
+| Other models / firmware | Any | Allowed to try the experimental flow if the robot exposes the required Bluetooth setup service and characteristics; not hardware-verified |
 
-This does not add Matter support to robots that lack it. Firmware and payload checks deliberately restrict this first release to the configuration tested. A compatible Matter controller and home network are still required.
+This does not add Matter support to robots that lack it. The helper accepts different firmware versions and preserves the product ID returned by each robot. It still requires valid robot identity/firmware metadata, the expected BLE setup characteristics, fresh physical button confirmation, and a valid iRobot Matter onboarding payload for an already-networked robot. Firmware and identity must remain unchanged during the session. A compatible Matter controller and home network are still required.
 
 Native Matter support is documented for additional models, including the 505 Combo, 705 Combo and Combo 10 Max. Their Bluetooth activation with this helper has **not** been proven. See the [compatibility evidence and expansion procedure](COMPATIBILITY.md); cloud API versions alone are not a reliable compatibility test.
 
 ## What you need
 
-- A powered-on, supported robot nearby, already connected to your home Wi-Fi.
+- A powered-on Roomba nearby, already connected to your home Wi-Fi and implementing the Bluetooth Matter setup flow.
 - Bluetooth enabled on the computer or phone.
 - A browser with Web Bluetooth support and an HTTPS-hosted copy of this page.
 - Your home app, ready to add a Matter accessory.
@@ -47,7 +47,7 @@ Browser support references: [Chrome's Web Bluetooth documentation](https://devel
 ## Pair your robot
 
 1. Open the helper in a supported browser, close the Roomba app, and stay near the robot.
-2. Select **Choose Roomba**. Choose your iRobot / Roomba in the browser's Bluetooth picker. The picker may also list unrelated devices; the helper verifies the robot's service, identity and firmware before enabling setup.
+2. Select **Choose Roomba**. Choose your iRobot / Roomba in the browser's Bluetooth picker. The picker may also list unrelated devices; the helper checks the required service/characteristics and reads identity and firmware before enabling setup. Untested firmware gets an experimental notice, not a block.
 3. Read the existing-pairing warning and check the acknowledgement. Select **Prepare setup code** once.
 4. When the Roomba asks, **briefly press the requested button**. Do not hold buttons or factory-reset it.
 5. Wait for the 11-digit setup code and QR code. The Bluetooth connection closes once the code is read.
@@ -116,9 +116,13 @@ Node.js 22 or later:
 npm test
 ```
 
-Tests cover the Matter SDK code vector, checksum and QR payload, onboarding validation, unsupported firmware, read-only connection, physical confirmation gating, cancellation, one-time setup writes, cleanup, and local QR rendering. Fake Bluetooth devices are used; tests never connect to a real robot.
+Tests cover the Matter SDK code vector, checksum and QR payload, product-ID preservation, onboarding validation, untested firmware, missing characteristics/metadata, identity stability, read-only connection, physical confirmation gating, cancellation, one-time setup writes, cleanup, and local QR rendering. Fake Bluetooth devices are used; tests never connect to a real robot.
 
 Before calling a new model or browser supported, verify it on actual hardware, including whether existing Matter links survive a setup request. Never test repeated setup on an installation you need to preserve.
+
+### Help test another model
+
+Run the normal flow on a robot whose existing Matter pairings you can afford to lose. Report your model/SKU, firmware, browser/OS, Matter controller, whether the button prompt appeared, and whether pairing and local control worked. Failed attempts are useful too. Do not post the setup code, QR code, raw onboarding JSON, MAC address, serial number, or cloud credentials. An unsupported BLE flow or invalid onboarding response still stops setup; this release does not send alternative commands or retry automatically.
 
 ### Protocol
 

@@ -61,12 +61,12 @@ export function decodePayload(value) {
   const version = number(p.version, 'version', 7);
   const vendor = number(p.vendorId, 'vendor ID', 65535);
   const product = number(p.productId, 'product ID', 65535);
-  const flow = number(p.customFlow, 'commissioning flow', 2);
+  number(p.customFlow, 'commissioning flow', 2);
   const discovery = number(p.discoveryCapabilitiesBitmask, 'discovery flags', 255);
   const discriminator = number(p.discriminator, 'discriminator', 4095);
   const pin = number(p.passcode, 'passcode', 99999998);
   requireThat(pin > 0 && ![12345678, 87654321].includes(pin) && !/^([1-9])\1{7}$/.test(String(pin)), 'The robot returned an invalid Matter passcode.');
-  requireThat(version === 0 && vendor === 0x1516 && product === 0x10 && [0, 2].includes(flow) && (discovery & 4) !== 0, 'This onboarding payload is not supported by this tested helper.');
+  requireThat(version === 0 && vendor === 0x1516 && (discovery & 4) !== 0, 'Unsupported Matter payload version, vendor, or network discovery flags.');
   return {code: manualCode(discriminator, pin), qr: qrPayload(discriminator, pin, vendor, product, discovery)};
 }
 
@@ -109,7 +109,7 @@ export class RoombaSetup {
       const mac = object(await characteristics.get(0x19).readValue()).mac;
       const firmware = object(await characteristics.get(0x16).readValue()).sw;
       requireThat(typeof mac === 'string' && /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(mac), 'Could not verify the robot identity.');
-      requireThat(firmware === TESTED_FIRMWARE, `Unsupported firmware: ${firmware ?? 'unknown'}. This release supports only the tested Max 705 Vac firmware.`);
+      requireThat(typeof firmware === 'string' && firmware.trim().length > 0, 'Could not read the robot firmware version.');
       return new RoombaSetup(device, characteristics, {mac: mac.toLowerCase(), firmware});
     } catch (error) { device.gatt.disconnect(); throw error; }
   }
@@ -151,7 +151,7 @@ export class RoombaSetup {
         controller.signal.throwIfAborted();
         const data = await this.characteristics.get(n).readValue();
         if (n === 0x19) requireThat(object(data).mac?.toLowerCase() === this.identity.mac, 'Robot identity changed. Setup stopped.');
-        if (n === 0x16) requireThat(object(data).sw === TESTED_FIRMWARE, 'Robot firmware changed. Setup stopped.');
+        if (n === 0x16) requireThat(object(data).sw === this.identity.firmware, 'Robot firmware changed. Setup stopped.');
       }
       progress('Waiting for the robot’s button confirmation…');
       await until(() => confirmed, 90000, controller.signal, 'The robot’s button confirmation was not received.');

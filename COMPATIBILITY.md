@@ -35,7 +35,9 @@ The Roomba Home 1.6.0 native client has a capability method `core::AssetCapabili
 
 This supports investigating capability-based discovery across models. It does not identify every eligible model or prove that a robot implements the complete BLE flow. A positive cloud/app capability or the presence of the characteristic UUIDs alone is insufficient to enable arbitrary control writes. No proprietary app binaries or real onboarding secrets are included in this repository.
 
-The helper's exact firmware and PID restrictions are a deliberate boundary around the one configuration tested, not a claimed limitation of the Matter encoding algorithm.
+The helper no longer has an exact firmware or product-ID allowlist. Owners can test other models through the normal flow. The Max 705 Vac remains the only hardware-verified native activation procedure; successful synthetic fixtures or a connection notice do not certify another model. The robot's actual product ID is preserved in the QR payload.
+
+Required BLE characteristics, valid identity/firmware metadata, identity stability, fresh physical confirmation and valid iRobot/on-network Matter payload checks remain in place. Missing protocol support stops the attempt; the helper does not guess alternative commands.
 
 ## How to add a model honestly
 
@@ -44,6 +46,6 @@ The helper's exact firmware and PID restrictions are a deliberate boundary aroun
 3. Verify the model's initialization and physical-confirmation sequence. Record whether the robot prompts and the expected `h → d → k` indications occur.
 4. Test the activation request once and validate the returned VID/PID, discovery flags, discriminator and PIN. Keep all actual onboarding secrets private.
 5. Commission into a real Matter controller with normal attestation validation. Verify state subscriptions, a reversible setting change, persistence and reconnection; document whether existing fabrics were removed.
-6. Add a firmware/model profile and a **synthetic** regression fixture, with a link to the owner's hardware results. Fake tests should check parsing and guards, not be described as hardware proof.
+6. Record the tested model/firmware and add a **synthetic** regression fixture, with a link to the owner's hardware results. Fake tests should check parsing and protocol checks, not be described as hardware proof.
 
-Until then, these are research candidates. The executable still blocks unverified models/firmware. No unsupported robot was activated to prepare this document.
+Until then, these are research candidates that owners are welcome to test. No additional physical robot was activated to prepare this document or remove the allowlists.

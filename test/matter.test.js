@@ -10,7 +10,7 @@ const payload = (fields = {}) => JSON.stringify({startMatterCommissioning: {
   onboardingPayload: {version:'0x0', vendorId:'0x1516', productId:'0010', customFlow:'0x2', discoveryCapabilitiesBitmask:'0x4', discriminator:'0xf00', passcode:'0x1344225', ...fields}
 }});
 
-function fixture({firmware=TESTED_FIRMWARE, hello=true, confirm=true, result=payload()}={}) {
+function fixture({firmware=TESTED_FIRMWARE, setupFirmware=firmware, missingCharacteristic, hello=true, confirm=true, result=payload()}={}) {
   const writes = [];
   const reads = [];
   const characteristics = new Map();
@@ -19,7 +19,11 @@ function fixture({firmware=TESTED_FIRMWARE, hello=true, confirm=true, result=pay
     connected: false,
     connect: async () => { device.gatt.connected=true; return {getPrimaryService: async id => {
       assert.equal(id, SERVICE);
-      return {getCharacteristic: async id => characteristics.get(Number.parseInt(id.slice(4,8),16))};
+      return {getCharacteristic: async id => {
+        const n=Number.parseInt(id.slice(4,8),16);
+        if(n===missingCharacteristic) throw new DOMException('Missing setup characteristic','NotFoundError');
+        return characteristics.get(n);
+      }};
     }}; },
     disconnect: () => { if(device.gatt.connected) { device.gatt.connected=false; device.dispatchEvent(new Event('gattserverdisconnected')); } }
   };
@@ -31,7 +35,7 @@ function fixture({firmware=TESTED_FIRMWARE, hello=true, confirm=true, result=pay
     characteristic.readValue=async () => {
       reads.push(n);
       if (n===0x19) return view('"mac":"00:11:22:33:44:55"');
-      if (n===0x16) return view(JSON.stringify({sw:firmware}));
+      if (n===0x16) return view(JSON.stringify({sw:notifications ? setupFirmware : firmware}));
       if (n===0x22) {const size=new DataView(new ArrayBuffer(2)); size.setUint16(0,new TextEncoder().encode(result).length,true); return size;}
       if (n===0x23) return view(result);
       if (n===0x1a && notifications) {if(hello) notify(0x68); if(confirm) notify(0x64);}
@@ -56,15 +60,25 @@ test('validated robot payload produces standard-flow codes', () => {
   assert.equal(result.qr,qrPayload(3840,20202021,0x1516,0x10,4));
 });
 
-test('rejects wrong product, malformed numeric fields, forbidden PINs and oversized responses', () => {
-  for (const bad of [{productId:'0011'},{vendorId:'0x1234'},{passcode:'0x0'},{passcode:'0xa98ac7'},{passcode:'junk'},{discriminator:'0x1000'},{customFlow:'0x3'},{version:'0x1'},{discoveryCapabilitiesBitmask:'0x2'}]) {
+test('accepts other product IDs and legal flows without replacing their identity', () => {
+  for (const product of [0x11,0x31,0x49,0xffff]) {
+    for (const flow of [0,1,2]) {
+      const result=decodePayload(view(payload({productId:`0x${product.toString(16)}`, customFlow:flow})));
+      assert.equal(result.code,'34970112332');
+      assert.equal(result.qr,qrPayload(3840,20202021,0x1516,product,4));
+    }
+  }
+});
+
+test('rejects invalid product IDs, malformed fields, forbidden PINs and oversized responses', () => {
+  for (const bad of [{productId:'0x10000'},{productId:'-1'},{productId:'junk'},{vendorId:'0x1234'},{passcode:'0x0'},{passcode:'0xa98ac7'},{passcode:'junk'},{discriminator:'0x1000'},{customFlow:'0x3'},{version:'0x1'},{discoveryCapabilitiesBitmask:'0x2'}]) {
     assert.throws(()=>decodePayload(view(payload(bad))),Error);
   }
   assert.throws(()=>decodePayload(view(' '.repeat(4097))),/size/);
   assert.throws(()=>decodePayload(view('{"startMatterCommissioning":{"matterCommissioningEnabled":false}}')),/enable/);
 });
 
-test('connecting verifies identity and firmware without requesting setup', async () => {
+test('connecting reads identity and firmware without requesting setup', async () => {
   const f=fixture(); const robot=await RoombaSetup.connect(f.bluetooth);
   assert.deepEqual(f.writes,[]);
   assert.deepEqual(f.reads,[0x19,0x16]);
@@ -72,9 +86,35 @@ test('connecting verifies identity and firmware without requesting setup', async
   robot.close(); assert.equal(f.device.gatt.connected,false);
 });
 
-test('unsupported firmware is blocked before notifications or control writes', async () => {
-  const f=fixture({firmware:'another-model'});
-  await assert.rejects(RoombaSetup.connect(f.bluetooth),/Unsupported firmware/);
+test('untested firmware and product IDs can complete the synthetic setup flow', async () => {
+  const f=fixture({firmware:'unverified-model+test-firmware',result:payload({productId:'0x31'})});
+  const robot=await RoombaSetup.connect(f.bluetooth);
+  assert.equal(robot.identity.firmware,'unverified-model+test-firmware');
+  assert.deepEqual(f.writes,[]);
+  const result=await robot.prepare(()=>{});
+  assert.equal(result.qr,qrPayload(3840,20202021,0x1516,0x31,4));
+  assert.deepEqual(f.writes,[[0x67]]);
+  assert.equal(f.device.gatt.connected,false);
+});
+
+test('missing firmware metadata is rejected without control writes', async () => {
+  for(const firmware of ['',null,123]) {
+    const f=fixture({firmware});
+    await assert.rejects(RoombaSetup.connect(f.bluetooth),/firmware version/);
+    assert.deepEqual(f.writes,[]); assert.equal(f.device.gatt.connected,false);
+  }
+});
+
+test('missing Matter setup characteristics are rejected without control writes', async () => {
+  const f=fixture({missingCharacteristic:0x23});
+  await assert.rejects(RoombaSetup.connect(f.bluetooth),/Missing setup characteristic/);
+  assert.deepEqual(f.writes,[]); assert.equal(f.device.gatt.connected,false);
+});
+
+test('firmware changing during initialization still stops setup before a control write', async () => {
+  const f=fixture({firmware:'unverified-firmware',setupFirmware:'changed-firmware'});
+  const robot=await RoombaSetup.connect(f.bluetooth);
+  await assert.rejects(robot.prepare(()=>{}),/Robot firmware changed/);
   assert.deepEqual(f.writes,[]); assert.equal(f.device.gatt.connected,false);
 });
 
@@ -102,7 +142,7 @@ for (const options of [{hello:true,confirm:false},{hello:false,confirm:true}]) {
 
 test('malformed payload fails closed and is never retried', async () => {
   const f=fixture({result:payload({vendorId:'0xffff'})}); const robot=await RoombaSetup.connect(f.bluetooth);
-  await assert.rejects(robot.prepare(()=>{}),/not supported/);
+  await assert.rejects(robot.prepare(()=>{}),/Unsupported Matter payload/);
   assert.equal(f.writes.length,1); assert.equal(f.device.gatt.connected,false);
 });
 
