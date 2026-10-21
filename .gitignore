@@ -5,3 +5,4 @@ node_modules/
 *.pcap
 matter-setup.json
 .openai/
+dist/

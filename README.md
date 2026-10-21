@@ -1,5 +1,7 @@
 # Roomba Matter Helper
 
+[Open the app](https://jouwdan.github.io/roomba-matter/) · [Build / deploy status](https://github.com/jouwdan/roomba-matter/actions/workflows/pages.yml) · [Model evidence](COMPATIBILITY.md)
+
 A small, browser-based tool that asks a supported Roomba for a **Matter setup code over Bluetooth**. Use the code in your Matter home app when the Roomba app does not offer its Matter setup menu.
 
 No Roomba account or cloud password is required. There is no backend, analytics, or upload of robot information or setup codes.
@@ -22,6 +24,8 @@ The helper requires an acknowledgement and fresh physical button confirmation, s
 | Other models / firmware | Any | Blocked before control writes |
 
 This does not add Matter support to robots that lack it. Firmware and payload checks deliberately restrict this first release to the configuration tested. A compatible Matter controller and home network are still required.
+
+Native Matter support is documented for additional models, including the 505 Combo, 705 Combo and Combo 10 Max. Their Bluetooth activation with this helper has **not** been proven. See the [compatibility evidence and expansion procedure](COMPATIBILITY.md); cloud API versions alone are not a reliable compatibility test.
 
 ## What you need
 
@@ -60,27 +64,51 @@ This is room selection, not a copy of the manufacturer's interactive floor-plan 
 
 ## Run it locally
 
-No dependency installation or build is needed. With Python 3 installed:
+The complete editable HTML, JavaScript, CSS and vendored QR library are in **`src/`**. No dependency installation or build is needed for local development. With Python 3 installed:
 
 ```sh
 git clone https://github.com/jouwdan/roomba-matter.git
 cd roomba-matter
-python3 -m http.server 8080 --bind 127.0.0.1 --directory dist
+python3 -m http.server 8080 --bind 127.0.0.1 --directory src
 ```
 
 Open **http://localhost:8080** in Chrome or Edge on that computer. Browsers treat localhost as a secure context for development. A phone cannot use another computer's localhost; publish `dist/` to an **HTTPS static host** to use it from a phone.
 
 Opening the HTML directly with `file://` is unsupported. No Wi-Fi passwords, robot cloud credentials, or HA access tokens need to be configured.
 
-## Deploy / share
+## Deploy to GitHub Pages
 
-Publish the contents of `dist/` on an HTTPS static host, such as GitHub Pages or Cloudflare Pages. No environment variables or server are needed. Use the page as a top-level tab; embedding it requires a host that allows Bluetooth through Permissions Policy.
+The repository includes [.github/workflows/pages.yml](.github/workflows/pages.yml). On a push to `main`, GitHub Actions runs the tests, builds the site from `src/` into `dist/`, uploads **only `dist/`**, and deploys it with GitHub's Pages action. Pull requests run the checks without deploying.
 
-`dist/_headers` supplies security headers for hosts that support that format. Other hosts may ignore it; verify their Permissions Policy does not disable Bluetooth. The HTML also declares a Content Security Policy that blocks fetch/XHR/WebSocket connections. The Bluetooth API is used locally.
+In the repository's **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Push to `main`, or select **Run workflow** on the Actions tab. The published project URL is:
+
+**https://jouwdan.github.io/roomba-matter/**
+
+All application asset/import paths are relative, so the `/roomba-matter/` project prefix works without changing a base URL. No custom domain, secrets, cloud credentials or environment variables are needed. The workflow uses GitHub's short-lived deployment token with Pages permissions.
+
+To build manually with Node.js 22 or later:
+
+```sh
+npm test
+npm run build
+```
+
+`scripts/build.mjs` recreates the generated `dist/` directory from `src/`; edit `src/`, not `dist/`. Generated output is ignored by Git. To host elsewhere, publish `dist/` to an HTTPS static host. Use the page as a top-level tab; embedding it requires a host that allows Bluetooth through Permissions Policy.
+
+`src/_headers` is copied into the build and supplies security headers for hosts that support that format. GitHub Pages does not apply this file; the HTML Content Security Policy still blocks fetch/XHR/WebSocket connections. Verify any other host's Permissions Policy does not disable Bluetooth. The Bluetooth API is used locally.
 
 The vendored QR library is served locally, so setup codes are never sent to a third-party QR image service. Hosting configuration, account credentials, packet captures and real robot payloads are not part of the repository.
 
 ## Development and tests
+
+```text
+src/                    Editable application source and local QR library
+scripts/build.mjs       Dependency-free static build
+test/                   Protocol and code-generation tests
+.github/workflows/      Test, build and GitHub Pages deployment
+dist/                   Generated publication output (ignored)
+COMPATIBILITY.md        Model evidence and hardware validation requirements
+```
 
 Node.js 22 or later:
 

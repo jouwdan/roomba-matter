@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {RoombaSetup, SERVICE, TESTED_FIRMWARE, checkDigit, manualCode, qrPayload, decodePayload} from '../dist/matter.js';
+import {RoombaSetup, SERVICE, TESTED_FIRMWARE, checkDigit, manualCode, qrPayload, decodePayload} from '../src/matter.js';
 
 const view = text => new DataView(new TextEncoder().encode(text).buffer);
 const payload = (fields = {}) => JSON.stringify({startMatterCommissioning: {
@@ -107,7 +107,7 @@ test('malformed payload fails closed and is never retried', async () => {
 });
 
 test('vendored QR renderer produces a local SVG without network requests', () => {
-  const scope={}; vm.runInNewContext(readFileSync(new URL('../dist/vendor/qrcode.js',import.meta.url),'utf8'),scope);
+  const scope={}; vm.runInNewContext(readFileSync(new URL('../src/vendor/qrcode.js',import.meta.url),'utf8'),scope);
   const code=scope.qrcode(0,'M'); code.addData(qrPayload(3840,20202021,0x1516,0x10,4),'Alphanumeric'); code.make();
   assert.match(code.createSvgTag({scalable:true,margin:4}),/^<svg\s/);
 });
