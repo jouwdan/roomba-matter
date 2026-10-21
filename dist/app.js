@@ -1,0 +1,70 @@
+import {RoombaSetup} from './matter.js';
+
+const $ = id => document.getElementById(id);
+let robot;
+let controller;
+const supported = !!navigator.bluetooth && window.isSecureContext;
+$('unsupported').hidden = !!navigator.bluetooth;
+$('insecure').hidden = window.isSecureContext;
+$('connect').disabled = !supported;
+
+function status(message, error = false) {
+  $('status').hidden = false;
+  $('status').textContent = message;
+  $('status').className = error ? 'error' : '';
+}
+
+$('connect').addEventListener('click', async () => {
+  $('connect').disabled = true;
+  status('Choose your robot in the Bluetooth picker…');
+  try {
+    robot = await RoombaSetup.connect(navigator.bluetooth);
+    $('identity').textContent = `Max 705 Vac connected · Bluetooth identity ending ${robot.identity.mac.slice(-5).toUpperCase()}`;
+    $('identity').hidden = false;
+    $('prepare').hidden = false;
+    status('Robot verified. Read the pairing warning before continuing.');
+  } catch (error) {
+    status(error.name === 'NotFoundError' ? 'No supported robot selected. Stay close to your Roomba, and choose it in the picker.' : error.message, true);
+    $('connect').disabled = !supported;
+  }
+});
+
+$('acknowledge').addEventListener('change', () => {
+  $('generate').disabled = !$('acknowledge').checked || !robot || robot.attempted;
+});
+
+$('generate').addEventListener('click', async () => {
+  if (!$('acknowledge').checked || !robot || robot.attempted) return;
+  $('generate').disabled = true;
+  $('acknowledge').disabled = true;
+  $('cancel').hidden = false;
+  controller = new AbortController();
+  try {
+    status('Connecting the setup session. Listen for the robot’s button prompt…');
+    const result = await robot.prepare(message => status(message), controller.signal);
+    $('setup-code').value = result.code;
+    const qr = window.qrcode(0, 'M');
+    qr.addData(result.qr, 'Alphanumeric');
+    qr.make();
+    $('qr').innerHTML = qr.createSvgTag({scalable: true, margin: 4});
+    $('result').hidden = false;
+    $('prepare').hidden = true;
+    status('Your setup code is ready. Add it in your home app; don’t request another code.');
+    $('result').scrollIntoView({behavior: 'smooth', block: 'start'});
+  } catch (error) {
+    status(`${error.message || 'Setup stopped.'} If the robot already appeared in your home app, check that home before trying setup again.`, true);
+  } finally { $('cancel').hidden = true; }
+});
+
+$('cancel').addEventListener('click', () => controller?.abort(new Error('Setup cancelled. A request already sent to the robot cannot be undone.')));
+$('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('setup-code').value); $('copy').textContent = 'Copied'; }
+  catch { $('setup-code').focus(); $('setup-code').select(); status('Select and copy the highlighted code.'); }
+});
+$('clear').addEventListener('click', () => {
+  $('setup-code').value = '';
+  $('qr').replaceChildren();
+  $('result').hidden = true;
+  status('Code cleared from this page. Your Matter pairing is unchanged.');
+});
+window.addEventListener('pagehide', () => { controller?.abort(new Error('Page closed.')); robot?.close(); $('setup-code').value = ''; $('qr').replaceChildren(); });

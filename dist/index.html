@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prepare a Matter setup code for a supported Roomba over Bluetooth. No account, cloud credentials, or uploads.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'">
+  <title>Roomba Matter Helper</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/qrcode.js" defer></script>
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <main>
+    <header><span class="mark" aria-hidden="true">◉</span><span>Roomba Matter Helper</span><a href="https://github.com/jouwdan/roomba-matter" rel="noreferrer">Source ↗</a></header>
+    <p class="eyebrow">LOCAL BLUETOOTH SETUP · EXPERIMENTAL</p>
+    <h1>Your Roomba.<br>Your smart home.</h1>
+    <p class="intro">Get a Matter setup code, then add your robot in Home Assistant, Apple Home, or Google Home.</p>
+    <div class="compatibility"><strong>Supported in this release</strong><br>Roomba Max 705 Vac · firmware 9.3.6 / I3.8.149<br><small>Other models and firmware are blocked until tested. A compatible Matter home is required.</small></div>
+    <section id="unsupported" class="notice" hidden>
+      <h2>This browser can’t connect to Bluetooth devices.</h2>
+      <p>On a Mac, Windows PC, or Android phone, open this page in Chrome or Edge. On iPhone or iPad, use <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" rel="noreferrer">Bluefy</a>, a browser with Bluetooth support.</p>
+      <p>Bluefy support for this helper still needs a real-device test. Safari and Firefox won’t work.</p>
+    </section>
+    <section id="insecure" class="notice" hidden><h2>Open the HTTPS version.</h2><p>Bluetooth access requires a secure page. For local development, use localhost on this computer.</p></section>
+    <section class="card">
+      <div class="step-heading"><span class="step">1</span><h2>Connect to your Roomba</h2></div>
+      <p>Keep the robot powered on and nearby. Close the Roomba app, then choose your iRobot / Roomba in the Bluetooth picker.</p>
+      <button id="connect" class="primary">Choose Roomba</button>
+      <p id="identity" class="subtle" hidden></p>
+    </section>
+    <section id="prepare" class="card" hidden>
+      <div class="step-heading"><span class="step">2</span><h2>Open Matter setup once</h2></div>
+      <div class="warning"><strong>Already added to a Matter home?</strong><p>Use that home’s “Share device” or pairing mode instead. Running this helper again may remove existing Matter pairings.</p></div>
+      <label class="ack"><input id="acknowledge" type="checkbox"> <span>I understand this may remove existing Matter pairings.</span></label>
+      <button id="generate" class="primary" disabled>Prepare setup code</button>
+      <button id="cancel" class="secondary" hidden>Cancel</button>
+      <p class="subtle">When the robot asks, briefly press the requested button. Keep this page open. Don’t hold buttons or factory-reset the robot.</p>
+    </section>
+    <div id="status" role="status" aria-live="polite" hidden></div>
+    <section id="result" class="card result" hidden>
+      <div class="step-heading"><span class="step">3</span><h2>Add it to your home</h2></div>
+      <p>In your home app, choose <strong>Add Matter device</strong> or <strong>Add accessory</strong>. Enter this code manually, or scan the QR code from another screen.</p>
+      <label for="setup-code">Matter setup code</label>
+      <div class="code-row"><input id="setup-code" readonly inputmode="numeric" aria-label="Matter setup code"><button id="copy" class="secondary">Copy</button></div>
+      <div id="qr" aria-label="Matter pairing QR code"></div>
+      <p class="success">Bluetooth disconnected. Finish adding it in your home app now.</p>
+      <p><strong>Don’t run setup again after pairing.</strong> To add a second home, share the device from the first home.</p>
+      <p class="subtle">Keep this code private. It is temporary; don’t rely on it as a permanent recovery code. Only Home Assistant pairing has been verified with the tested robot.</p>
+      <button id="clear" class="secondary">Clear code from this page</button>
+    </section>
+    <footer><p>Unofficial community tool. Not affiliated with iRobot or the Matter platforms.</p><p>No accounts, analytics, robot cloud login, or uploads. The code stays in this page’s memory until you clear or close it. Your browser and web host may keep normal access logs.</p><p><a href="https://github.com/jouwdan/roomba-matter#readme" rel="noreferrer">Instructions & compatibility</a> · <a href="https://github.com/jouwdan/roomba-matter/issues" rel="noreferrer">Report a problem</a></p></footer>
+  </main>
+</body>
+</html>
