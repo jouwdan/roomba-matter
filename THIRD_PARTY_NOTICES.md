@@ -6,7 +6,7 @@ Source: https://github.com/kazuhikoarase/qrcode-generator
 
 Package: https://www.npmjs.com/package/qrcode-generator/v/1.4.4
 
-The unmodified `qrcode.js` is vendored under `src/vendor/` and copied into `dist/vendor/` by the build. Its original MIT license header is preserved. No runtime CDN requests are used.
+The unmodified `qrcode.js` is served directly from `vendor/`. Its original MIT license header is preserved. No runtime CDN requests are used.
 
 Copyright (c) 2009 Kazuhiko Arase
 

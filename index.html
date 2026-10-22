@@ -12,7 +12,7 @@
 </head>
 <body>
   <main>
-    <header><span class="mark" aria-hidden="true">◉</span><span>Roomba Matter Helper</span><a href="https://github.com/jouwdan/roomba-matter" rel="noreferrer">Source ↗</a></header>
+    <header><span class="mark" aria-hidden="true">◉</span><span>Roomba Matter Helper</span><a href="https://github.com/jouwdan/roomba-matter" rel="noreferrer">Source ↗</a><button id="theme-toggle" class="secondary theme-toggle" type="button" aria-label="Switch colour theme" title="Switch colour theme">◐</button></header>
     <p class="eyebrow">LOCAL MATTER CONTROL · EXPERIMENTAL</p>
     <h1>Your Roomba.<br>Locally controlled.</h1>
     <p class="intro">For newer Roombas using the <strong>Roomba Home app</strong>. Get a Matter setup code over Bluetooth, then add your compatible robot to Home Assistant, Apple Home, or Google Home.</p>
@@ -31,18 +31,20 @@
       <button id="connect" class="primary">Choose Roomba</button>
       <p id="identity" class="subtle" hidden></p>
     </section>
-    <section id="prepare" class="card" hidden>
-      <div class="step-heading"><span class="step">2</span><h2>Open Matter setup once</h2></div>
+    <fieldset id="prepare" class="card" disabled aria-labelledby="prepare-heading">
+      <div class="step-heading"><span class="step">2</span><h2 id="prepare-heading">Open Matter setup once</h2></div>
       <div class="warning"><strong>Already added to a Matter home?</strong><p>Use that home’s “Share device” or pairing mode instead. Running this helper again may remove existing Matter pairings.</p></div>
       <label class="ack"><input id="acknowledge" type="checkbox"> <span>I understand this is experimental and may remove existing Matter pairings.</span></label>
       <button id="generate" class="primary" disabled>Prepare setup code</button>
       <button id="cancel" class="secondary" hidden>Cancel</button>
       <p class="subtle">After selecting Prepare setup code, wait until you hear a chime from the robot, then briefly press its power button once. This confirms setup so the helper can retrieve your Matter pairing code. Keep this page open. Don’t hold the button or factory-reset the robot.</p>
-    </section>
+    </fieldset>
     <div id="status" role="status" aria-live="polite" hidden></div>
-    <section id="result" class="card result" hidden>
-      <div class="step-heading"><span class="step">3</span><h2>Add it to your home</h2></div>
+    <fieldset id="result" class="card result" disabled aria-labelledby="result-heading">
+      <div class="step-heading"><span class="step">3</span><h2 id="result-heading">Add it to your home</h2></div>
       <p>In your home app, choose <strong>Add Matter device</strong> or <strong>Add accessory</strong>. Enter this code manually, or scan the QR code from another screen.</p>
+      <p id="result-pending" class="subtle">Your Matter setup code and QR code will appear here after you confirm setup on the robot.</p>
+      <div id="setup-details" hidden>
       <label for="setup-code">Matter setup code</label>
       <div class="code-row"><input id="setup-code" readonly inputmode="numeric" aria-label="Matter setup code"><button id="copy" class="secondary">Copy</button></div>
       <div id="qr" aria-label="Matter pairing QR code"></div>
@@ -50,7 +52,8 @@
       <p><strong>Don’t run setup again after pairing.</strong> To add a second home, share the device from the first home.</p>
       <p class="subtle">Keep this code private. It is temporary; don’t rely on it as a permanent recovery code. Only Home Assistant pairing has been verified with the tested robot.</p>
       <button id="clear" class="secondary">Clear code from this page</button>
-    </section>
+      </div>
+    </fieldset>
     <footer><p>Unofficial community tool. Not affiliated with iRobot or the Matter platforms.</p><p>No accounts, analytics, robot cloud login, or uploads. The code stays in this page’s memory until you clear or close it. Your browser and web host may keep normal access logs.</p><p><a href="https://github.com/jouwdan/roomba-matter#readme" rel="noreferrer">Instructions & compatibility</a> · <a href="https://github.com/jouwdan/roomba-matter/issues" rel="noreferrer">Report a problem</a></p></footer>
   </main>
 </body>

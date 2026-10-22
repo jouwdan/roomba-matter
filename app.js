@@ -1,6 +1,21 @@
 import {RoombaSetup, TESTED_FIRMWARE} from './matter.js';
 
 const $ = id => document.getElementById(id);
+const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+let followSystemTheme = true;
+function setTheme(dark) {
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  $('theme-toggle').textContent = dark ? '☀' : '☾';
+  const label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  $('theme-toggle').setAttribute('aria-label', label);
+  $('theme-toggle').title = label;
+}
+setTheme(systemTheme.matches);
+systemTheme.addEventListener('change', event => { if (followSystemTheme) setTheme(event.matches); });
+$('theme-toggle').addEventListener('click', () => {
+  followSystemTheme = false;
+  setTheme(document.documentElement.dataset.theme !== 'dark');
+});
 let robot;
 let controller;
 const supported = !!navigator.bluetooth && window.isSecureContext;
@@ -21,7 +36,7 @@ $('connect').addEventListener('click', async () => {
     robot = await RoombaSetup.connect(navigator.bluetooth);
     $('identity').textContent = `Robot connected · firmware ${robot.identity.firmware} · Bluetooth identity ending ${robot.identity.mac.slice(-5).toUpperCase()}`;
     $('identity').hidden = false;
-    $('prepare').hidden = false;
+    $('prepare').disabled = false;
     status(robot.identity.firmware === TESTED_FIRMWARE
       ? 'Robot identity checked. Read the pairing warning before continuing.'
       : 'This robot/firmware is untested. You can try the experimental setup flow after reading the pairing warning.');
@@ -49,8 +64,9 @@ $('generate').addEventListener('click', async () => {
     qr.addData(result.qr, 'Alphanumeric');
     qr.make();
     $('qr').innerHTML = qr.createSvgTag({scalable: true, margin: 4});
-    $('result').hidden = false;
-    $('prepare').hidden = true;
+    $('result').disabled = false;
+    $('result-pending').hidden = true;
+    $('setup-details').hidden = false;
     status('Your setup code is ready. Add it in your home app; don’t request another code.');
     $('result').scrollIntoView({behavior: 'smooth', block: 'start'});
   } catch (error) {
@@ -66,7 +82,9 @@ $('copy').addEventListener('click', async () => {
 $('clear').addEventListener('click', () => {
   $('setup-code').value = '';
   $('qr').replaceChildren();
-  $('result').hidden = true;
+  $('setup-details').hidden = true;
+  $('result-pending').textContent = 'Code cleared from this page. Your Matter pairing is unchanged.';
+  $('result-pending').hidden = false;
   status('Code cleared from this page. Your Matter pairing is unchanged.');
 });
 window.addEventListener('pagehide', () => { controller?.abort(new Error('Page closed.')); robot?.close(); $('setup-code').value = ''; $('qr').replaceChildren(); });
