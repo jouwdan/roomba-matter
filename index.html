@@ -31,12 +31,16 @@
       <p id="identity" class="subtle" hidden></p>
     </section>
     <fieldset id="prepare" class="card" disabled aria-labelledby="prepare-heading">
-      <div class="step-heading"><span class="step">2</span><h2 id="prepare-heading">Open Matter setup once</h2></div>
+      <div class="step-heading"><span class="step">2</span><h2 id="prepare-heading">Get your Matter code</h2></div>
       <div class="warning"><strong>Already added to a Matter home?</strong><p>Use that home’s “Share device” or pairing mode instead. Running this helper again may remove existing Matter pairings.</p></div>
-      <label class="ack"><input id="acknowledge" type="checkbox"> <span>I understand this is experimental and may remove existing Matter pairings.</span></label>
-      <button id="generate" class="primary" disabled>Prepare setup code</button>
+      <ol class="setup-instructions">
+        <li>Select <strong>Start Matter setup</strong> below.</li>
+        <li>Wait for your robot to <strong>chime</strong>.</li>
+        <li><strong>Press its power button once</strong>, briefly. Your code will appear in step 3.</li>
+      </ol>
+      <button id="generate" class="primary" disabled>Start Matter setup</button>
       <button id="cancel" class="secondary" hidden>Cancel</button>
-      <p class="subtle">After selecting Prepare setup code, wait until you hear a chime from the robot, then briefly press its power button once. This confirms setup so the helper can retrieve your Matter pairing code. Keep this page open. Don’t hold the button or factory-reset the robot.</p>
+      <p class="subtle">Keep this page open. Don’t hold the power button or factory-reset the robot.</p>
     </fieldset>
     <div id="status" role="status" aria-live="polite" hidden></div>
     <fieldset id="result" class="card result" disabled aria-labelledby="result-heading">

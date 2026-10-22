@@ -37,6 +37,7 @@ $('connect').addEventListener('click', async () => {
     $('identity').textContent = `Robot connected · firmware ${robot.identity.firmware} · Bluetooth identity ending ${robot.identity.mac.slice(-5).toUpperCase()}`;
     $('identity').hidden = false;
     $('prepare').disabled = false;
+    $('generate').disabled = false;
     status(robot.identity.firmware === TESTED_FIRMWARE
       ? 'Robot identity checked. Read the pairing warning before continuing.'
       : 'This robot/firmware is untested. You can try the experimental setup flow after reading the pairing warning.');
@@ -46,14 +47,9 @@ $('connect').addEventListener('click', async () => {
   }
 });
 
-$('acknowledge').addEventListener('change', () => {
-  $('generate').disabled = !$('acknowledge').checked || !robot || robot.attempted;
-});
-
 $('generate').addEventListener('click', async () => {
-  if (!$('acknowledge').checked || !robot || robot.attempted) return;
+  if (!robot || robot.attempted) return;
   $('generate').disabled = true;
-  $('acknowledge').disabled = true;
   $('cancel').hidden = false;
   controller = new AbortController();
   try {

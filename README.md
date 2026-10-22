@@ -20,7 +20,7 @@ Use **Chrome or Edge on macOS/Windows**, or **Chrome on Android**, with Bluetoot
 
 1. Open the helper, close the Roomba Home app, and stay near the powered-on robot.
 2. Select **Choose Roomba** and choose your robot in the Bluetooth picker.
-3. Read the warning, check the acknowledgement, and select **Prepare setup code** once.
+3. Read the warning and select **Start Matter setup** once. The numbered instructions in step 2 guide you through the robot confirmation.
 4. **When you hear a chime, briefly press the robot’s power button once.** This confirms setup so the helper can retrieve your Matter pairing code. Don’t hold the button or factory-reset the robot.
 5. Wait for the setup code and QR code, then use your home app’s **Add Matter device / Add accessory** flow. Scan from another screen or enter the code manually.
 6. Check your home app before retrying if it reports an error. **Don’t rerun setup after a successful pairing.**

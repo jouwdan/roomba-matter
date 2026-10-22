@@ -49,9 +49,6 @@ test('all steps stay visible while connection and code readiness gate later cont
   p.connect();
   await get('connect').fire('click');
   assert.equal(get('prepare').disabled, false);
-  assert.equal(get('generate').disabled, true);
-  get('acknowledge').checked = true;
-  get('acknowledge').fire('change');
   assert.equal(get('generate').disabled, false);
   const pending = get('generate').fire('click');
   assert.equal(get('result').disabled, true);
