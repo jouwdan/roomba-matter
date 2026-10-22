@@ -129,7 +129,7 @@ export class RoombaSetup {
       const byte = value.getUint8(0);
       if (byte === 0x68) {
         helloSeen = true;
-        progress('Press the button the Roomba asks for. Use a brief press, not a long hold.');
+        progress('When you hear the robot chime, briefly press its power button once to get your Matter pairing code. Don’t hold the button.');
       }
       if (byte === 0x64 && helloSeen) confirmed = true;
       if (byte === 0x6b && sent) ready = true;
@@ -153,9 +153,9 @@ export class RoombaSetup {
         if (n === 0x19) requireThat(object(data).mac?.toLowerCase() === this.identity.mac, 'Robot identity changed. Setup stopped.');
         if (n === 0x16) requireThat(object(data).sw === this.identity.firmware, 'Robot firmware changed. Setup stopped.');
       }
-      progress('Waiting for the robot’s button confirmation…');
+      progress('Waiting for confirmation. When you hear the robot chime, briefly press its power button once to get your Matter pairing code. Don’t hold the button.');
       await until(() => confirmed, 90000, controller.signal, 'The robot’s button confirmation was not received.');
-      progress('Button confirmed. Preparing your setup code…');
+      progress('Power button confirmed. Preparing your Matter pairing code…');
       controller.signal.throwIfAborted();
       const command = this.characteristics.get(0x0b);
       sent = true;

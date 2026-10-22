@@ -42,7 +42,7 @@ $('generate').addEventListener('click', async () => {
   $('cancel').hidden = false;
   controller = new AbortController();
   try {
-    status('Connecting the setup session. Listen for the robot’s button prompt…');
+    status('Connecting the setup session. When the robot chimes, briefly press its power button once to get your Matter pairing code…');
     const result = await robot.prepare(message => status(message), controller.signal);
     $('setup-code').value = result.code;
     const qr = window.qrcode(0, 'M');

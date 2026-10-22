@@ -55,7 +55,7 @@ Browser support references: [Chrome's Web Bluetooth documentation](https://devel
 1. Open the helper in a supported browser, close the Roomba app, and stay near the robot.
 2. Select **Choose Roomba**. Choose your iRobot / Roomba in the browser's Bluetooth picker. The picker may also list unrelated devices; the helper checks the required service/characteristics and reads identity and firmware before enabling setup. Untested firmware gets an experimental notice, not a block.
 3. Read the existing-pairing warning and check the acknowledgement. Select **Prepare setup code** once.
-4. When the Roomba asks, **briefly press the requested button**. Do not hold buttons or factory-reset it.
+4. Wait until you hear a **chime from the robot**, then **briefly press its power button once**. This confirms setup so the helper can retrieve your Matter pairing code. Do not hold the button or factory-reset the robot.
 5. Wait for the 11-digit setup code and QR code. The Bluetooth connection closes once the code is read.
 6. Open Home Assistant, Apple Home, or Google Home and use its normal **Add Matter device / Add accessory** flow. Enter the code manually. If another screen displays the QR code, you can scan it instead.
 7. Check whether your robot appeared in the home app even if the phone reported an error. **Do not rerun the helper after a successful pairing.**
@@ -128,13 +128,13 @@ Before calling a new model or browser supported, verify it on actual hardware, i
 
 ### Help test another model
 
-Run the normal flow on a robot whose existing Matter pairings you can afford to lose. Report your model/SKU, firmware, browser/OS, Matter controller, whether the button prompt appeared, and whether pairing and local control worked. Failed attempts are useful too. Do not post the setup code, QR code, raw onboarding JSON, MAC address, serial number, or cloud credentials. An unsupported BLE flow or invalid onboarding response still stops setup; this release does not send alternative commands or retry automatically.
+Run the normal flow on a robot whose existing Matter pairings you can afford to lose. Report your model/SKU, firmware, browser/OS, Matter controller, whether the robot chimed and accepted a single brief power-button press, and whether pairing and local control worked. Failed attempts are useful too. Do not post the setup code, QR code, raw onboarding JSON, MAC address, serial number, or cloud credentials. An unsupported BLE flow or invalid onboarding response still stops setup; this release does not send alternative commands or retry automatically.
 
 ### Protocol
 
 - GATT service: `c74edd21-763c-4e54-85a8-43bb75035d75`.
 - Identity and setup initialization: characteristics `c74e0014` through `c74e001a`, with the same UUID suffix.
-- Status indications on `c74e000c`: `h` (button prompt), `d` (button confirmed), `k` (payload ready).
+- Status indications on `c74e000c`: `h` (physical-confirmation prompt; the tested robot chimes), `d` (button confirmed), `k` (payload ready). On the tested Max 705 Vac, briefly press the power button once after the chime to confirm setup.
 - After initialization and fresh button confirmation, write **one byte `0x67` (`g`)** with response to `c74e000b`.
 - Read the little-endian payload length from `c74e0022`, then the onboarding JSON from `c74e0023`.
 - Validate the response and encode a standard-flow Matter manual code and QR payload. This avoids the manufacturer-app redirect from the robot's custom-flow metadata; passcode, discriminator, vendor and product identity are preserved in the QR payload.

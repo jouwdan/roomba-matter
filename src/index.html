@@ -27,6 +27,7 @@
     <section class="card">
       <div class="step-heading"><span class="step">1</span><h2>Connect to your Roomba</h2></div>
       <p>Your robot should already be set up on home Wi-Fi. Keep it powered on and nearby. Close the Roomba Home app, then choose your iRobot / Roomba in the Bluetooth picker.</p>
+      <p>During setup, wait for the robot to chime, then <strong>briefly press its power button once</strong> to get your Matter pairing code.</p>
       <button id="connect" class="primary">Choose Roomba</button>
       <p id="identity" class="subtle" hidden></p>
     </section>
@@ -36,7 +37,7 @@
       <label class="ack"><input id="acknowledge" type="checkbox"> <span>I understand this is experimental and may remove existing Matter pairings.</span></label>
       <button id="generate" class="primary" disabled>Prepare setup code</button>
       <button id="cancel" class="secondary" hidden>Cancel</button>
-      <p class="subtle">When the robot asks, briefly press the requested button. Keep this page open. Don’t hold buttons or factory-reset the robot.</p>
+      <p class="subtle">After selecting Prepare setup code, wait until you hear a chime from the robot, then briefly press its power button once. This confirms setup so the helper can retrieve your Matter pairing code. Keep this page open. Don’t hold the button or factory-reset the robot.</p>
     </section>
     <div id="status" role="status" aria-live="polite" hidden></div>
     <section id="result" class="card result" hidden>

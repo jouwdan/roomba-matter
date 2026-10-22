@@ -43,7 +43,7 @@ Required BLE characteristics, valid identity/firmware metadata, identity stabili
 
 1. On an owner-authorized test robot, record the exact model/SKU and firmware. Use a robot whose existing Matter pairings can be lost.
 2. First inspect the BLE service and required characteristics without control writes. Do not publish MAC addresses, serial numbers, identifiers, or setup payloads.
-3. Verify the model's initialization and physical-confirmation sequence. Record whether the robot prompts and the expected `h → d → k` indications occur.
+3. Verify the model's initialization and physical-confirmation sequence. On the tested Max 705 Vac, wait for the chime, then briefly press the power button once to confirm setup and receive the Matter pairing code. Record whether the model chimes, accepts that button press, and emits the expected `h → d → k` indications.
 4. Test the activation request once and validate the returned VID/PID, discovery flags, discriminator and PIN. Keep all actual onboarding secrets private.
 5. Commission into a real Matter controller with normal attestation validation. Verify state subscriptions, a reversible setting change, persistence and reconnection; document whether existing fabrics were removed.
 6. Record the tested model/firmware and add a **synthetic** regression fixture, with a link to the owner's hardware results. Fake tests should check parsing and protocol checks, not be described as hardware proof.
