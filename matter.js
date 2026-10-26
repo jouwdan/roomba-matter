@@ -1,4 +1,4 @@
-// Protocol derived from the Roomba Home 1.6.0 client and verified with a Max 705 Vac.
+// Protocol derived from Roomba Home 1.6.0; hardware reports cover Max 705 Vac and Plus 505 Combo.
 export const SERVICE = 'c74edd21-763c-4e54-85a8-43bb75035d75';
 export const TESTED_FIRMWARE = 'p25-705+9.3.6+I3.8.149';
 const uuid = n => `c74e${n.toString(16).padStart(4, '0')}-763c-4e54-85a8-43bb75035d75`;
@@ -96,22 +96,34 @@ export class RoombaSetup {
     this.attempted = false;
   }
 
-  static async connect(bluetooth) {
+  static async connect(bluetooth, progress = () => {}) {
     // A broad chooser also works in iOS Web Bluetooth browsers. Validate before writes.
     const device = await bluetooth.requestDevice({acceptAllDevices: true, optionalServices: [SERVICE]});
-    try {
-      const server = await device.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE);
-      const characteristics = new Map();
-      for (const n of [0x19, 0x16, 0x0b, 0x0c, 0x22, 0x23, 0x14, 0x15, 0x17, 0x18, 0x1a]) {
-        characteristics.set(n, await service.getCharacteristic(uuid(n)));
+    progress('Connecting to your robot…');
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE);
+        const characteristics = new Map();
+        for (const n of [0x19, 0x16, 0x0b, 0x0c, 0x22, 0x23, 0x14, 0x15, 0x17, 0x18, 0x1a]) {
+          characteristics.set(n, await service.getCharacteristic(uuid(n)));
+        }
+        const mac = object(await characteristics.get(0x19).readValue()).mac;
+        const firmware = object(await characteristics.get(0x16).readValue()).sw;
+        requireThat(typeof mac === 'string' && /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(mac), 'Could not verify the robot identity.');
+        requireThat(typeof firmware === 'string' && firmware.trim().length > 0, 'Could not read the robot firmware version.');
+        requireThat(device.gatt.connected, 'Bluetooth disconnected while checking the robot.');
+        return new RoombaSetup(device, characteristics, {mac: mac.toLowerCase(), firmware});
+      } catch (error) {
+        const disconnected = !device.gatt.connected || error.name === 'NetworkError';
+        device.gatt.disconnect();
+        if (!disconnected) throw error;
+        if (attempt === 2) throw new Error('The robot’s Bluetooth connection is unavailable. Close other Roomba apps or tabs, stay nearby, wait a few minutes, then choose the robot again. If it is already paired through Matter, use that home’s Share device option instead of starting setup again.', {cause: error});
+        progress(`Bluetooth connection dropped. Reconnecting (${attempt + 2} of 3)…`);
+        // Reconnect only during read-only discovery; all GATT handles must be retrieved again.
+        await delay(1000 * (attempt + 1));
       }
-      const mac = object(await characteristics.get(0x19).readValue()).mac;
-      const firmware = object(await characteristics.get(0x16).readValue()).sw;
-      requireThat(typeof mac === 'string' && /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(mac), 'Could not verify the robot identity.');
-      requireThat(typeof firmware === 'string' && firmware.trim().length > 0, 'Could not read the robot firmware version.');
-      return new RoombaSetup(device, characteristics, {mac: mac.toLowerCase(), firmware});
-    } catch (error) { device.gatt.disconnect(); throw error; }
+    }
   }
 
   async prepare(progress, signal) {
