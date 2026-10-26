@@ -8,7 +8,14 @@ The robot must already be on Wi-Fi and have Matter-capable firmware. This helper
 
 ## Compatibility
 
-**Experimental:** the native Bluetooth sequence and Home Assistant pairing are verified on a **Max 705 Vac**, firmware `p25-705+9.3.6+I3.8.149`. The browser implementation, other robots, Apple Home, Google Home and Bluefy still need hardware testing. There is no model or firmware allowlist; testers are welcome.
+**Browser setup has been verified on two models:**
+
+| Robot | Firmware | Reported result |
+| --- | --- | --- |
+| Max 705 Vac | `p25-705+9.3.6+I3.8.149` | Owner tested the web helper on macOS with successful pairing to Apple Home and Home Assistant |
+| Plus 505 Combo, SKU N185020 | `p25-505+9.3.6+I3.8.149` | Windows 11 / Edge → Apple Home by QR → shared to Home Assistant ([report #1](https://github.com/jouwdan/roomba-matter/issues/1)) |
+
+Still experimental. Other models, Google Home and Bluefy need testing. There is no model or firmware allowlist; testers are welcome.
 
 [iRobot’s app guide](https://www.irobot.ie/en_IE/irobot-home-app.html) lists the newer 100, 200, Plus 400, Plus 500 and Max 705 series for Roomba Home. App compatibility alone does not establish Matter support. Technically, this app generation is often called **Prime**, after its Android package [`com.irobot.home.prime`](https://play.google.com/store/apps/details?id=com.irobot.home.prime).
 
@@ -28,6 +35,8 @@ Use **Chrome or Edge on macOS/Windows**, or **Chrome on Android**, with Bluetoot
 All three steps stay visible; later steps are greyed out until ready. The page follows your system’s colour theme, with a header toggle for this visit.
 
 The chosen home app performs commissioning and certificate checks. Available controls and required hubs depend on the robot and platform. For HA room selection, use the vacuum entity’s **Map vacuum segments to areas** setting; see [HA’s instructions](https://www.home-assistant.io/integrations/vacuum/#mapping-your-vacuum-areas-to-home-assistant-areas).
+
+**Bluetooth drops while connecting?** The helper retries read-only discovery up to three connection attempts. If it remains unavailable, close other Roomba apps/tabs, stay nearby, and wait a few minutes before choosing it again. A 505 owner reported Bluetooth becoming available again after several minutes following pairing. The cause of that wait is unconfirmed; the helper never retries the Matter setup command. Already-paired robots should be shared from their existing Matter home.
 
 ## Source and hosting
 

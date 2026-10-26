@@ -1,4 +1,4 @@
-import {RoombaSetup, TESTED_FIRMWARE} from './matter.js';
+import {RoombaSetup} from './matter.js';
 
 const $ = id => document.getElementById(id);
 const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
@@ -33,14 +33,12 @@ $('connect').addEventListener('click', async () => {
   $('connect').disabled = true;
   status('Choose your robot in the Bluetooth picker…');
   try {
-    robot = await RoombaSetup.connect(navigator.bluetooth);
+    robot = await RoombaSetup.connect(navigator.bluetooth, message => status(message));
     $('identity').textContent = `Robot connected · firmware ${robot.identity.firmware} · Bluetooth identity ending ${robot.identity.mac.slice(-5).toUpperCase()}`;
     $('identity').hidden = false;
     $('prepare').disabled = false;
     $('generate').disabled = false;
-    status(robot.identity.firmware === TESTED_FIRMWARE
-      ? 'Robot identity checked. Read the pairing warning before continuing.'
-      : 'This robot/firmware is untested. You can try the experimental setup flow after reading the pairing warning.');
+    status('Robot identity checked. Read the pairing warning before continuing. See the compatibility notes for tested models and firmware.');
   } catch (error) {
     status(error.name === 'NotFoundError' ? 'No robot selected, or it does not expose the required Bluetooth setup service and characteristics. Stay close and choose your Roomba in the picker.' : error.message, true);
     $('connect').disabled = !supported;

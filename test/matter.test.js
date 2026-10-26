@@ -10,17 +10,29 @@ const payload = (fields = {}) => JSON.stringify({startMatterCommissioning: {
   onboardingPayload: {version:'0x0', vendorId:'0x1516', productId:'0010', customFlow:'0x2', discoveryCapabilitiesBitmask:'0x4', discriminator:'0xf00', passcode:'0x1344225', ...fields}
 }});
 
-function fixture({firmware=TESTED_FIRMWARE, setupFirmware=firmware, missingCharacteristic, hello=true, confirm=true, result=payload()}={}) {
+function fixture({firmware=TESTED_FIRMWARE, setupFirmware=firmware, missingCharacteristic, hello=true, confirm=true, result=payload(), dropDuring, drops=0, staleConnected=false}={}) {
   const writes = [];
   const reads = [];
+  const lookups = [];
+  const counters = {connections: 0, selections: 0};
   const characteristics = new Map();
   const device = new EventTarget();
+  const drop = stage => {
+    if (stage === dropDuring && drops > 0) {
+      drops--;
+      if (!staleConnected) device.gatt.disconnect();
+      throw new DOMException('GATT Server is disconnected. Cannot retrieve services. (Re)connect first with device.gatt.connect.', 'NetworkError');
+    }
+  };
   device.gatt = {
     connected: false,
-    connect: async () => { device.gatt.connected=true; return {getPrimaryService: async id => {
+    connect: async () => { counters.connections++; drop('connect'); device.gatt.connected=true; return {getPrimaryService: async id => {
+      drop('service');
       assert.equal(id, SERVICE);
       return {getCharacteristic: async id => {
+        drop('characteristic');
         const n=Number.parseInt(id.slice(4,8),16);
+        lookups.push(n);
         if(n===missingCharacteristic) throw new DOMException('Missing setup characteristic','NotFoundError');
         return characteristics.get(n);
       }};
@@ -34,6 +46,7 @@ function fixture({firmware=TESTED_FIRMWARE, setupFirmware=firmware, missingChara
     characteristic.startNotifications=async () => {notifications=true;};
     characteristic.readValue=async () => {
       reads.push(n);
+      if (n===0x16 && !notifications) drop('metadata');
       if (n===0x19) return view('"mac":"00:11:22:33:44:55"');
       if (n===0x16) return view(JSON.stringify({sw:notifications ? setupFirmware : firmware}));
       if (n===0x22) {const size=new DataView(new ArrayBuffer(2)); size.setUint16(0,new TextEncoder().encode(result).length,true); return size;}
@@ -44,7 +57,7 @@ function fixture({firmware=TESTED_FIRMWARE, setupFirmware=firmware, missingChara
     characteristic.writeValueWithResponse=async data => {writes.push([...data]); assert.equal(n,0x0b); notify(0x6b);};
     characteristics.set(n,characteristic);
   }
-  return {device,writes,reads,bluetooth:{requestDevice:async options=>{assert.deepEqual(options.optionalServices,[SERVICE]);return device;}}};
+  return {device,writes,reads,lookups,counters,bluetooth:{requestDevice:async options=>{counters.selections++;assert.deepEqual(options.optionalServices,[SERVICE]);return device;}}};
 }
 
 test('Matter SDK published setup-code vector and Verhoeff checksum', () => {
@@ -86,6 +99,47 @@ test('connecting reads identity and firmware without requesting setup', async ()
   robot.close(); assert.equal(f.device.gatt.connected,false);
 });
 
+for (const dropDuring of ['connect', 'service', 'characteristic', 'metadata']) {
+  test(`disconnection during ${dropDuring} reconnects and repeats only read-only discovery`, async () => {
+    const f = fixture({dropDuring, drops: 1});
+    const progress = [];
+    const robot = await RoombaSetup.connect(f.bluetooth, message => progress.push(message));
+    assert.equal(f.counters.connections, 2);
+    assert.equal(f.counters.selections, 1);
+    assert.deepEqual(f.writes, []);
+    assert.ok(f.reads.every(n => [0x19, 0x16].includes(n)));
+    if (dropDuring === 'metadata') assert.equal(f.lookups.length, 22);
+    assert.ok(progress.some(message => message.includes('Reconnecting (2 of 3)')));
+    assert.equal(robot.identity.firmware, TESTED_FIRMWARE);
+    robot.close();
+  });
+}
+
+test('persistent disconnections stop after three attempts with actionable advice and no setup writes', async () => {
+  const f = fixture({dropDuring: 'service', drops: 3});
+  const progress = [];
+  await assert.rejects(RoombaSetup.connect(f.bluetooth, message => progress.push(message)), error => {
+    assert.match(error.message, /wait a few minutes/);
+    assert.match(error.message, /Share device/);
+    assert.equal(error.cause.name, 'NetworkError');
+    return true;
+  });
+  assert.equal(f.counters.connections, 3);
+  assert.equal(f.counters.selections, 1);
+  assert.ok(progress.some(message => message.includes('Reconnecting (3 of 3)')));
+  assert.deepEqual(f.writes, []);
+  assert.deepEqual(f.reads, []);
+  assert.equal(f.device.gatt.connected, false);
+});
+
+test('a NetworkError also reconnects when the browser still reports a connected GATT server', async () => {
+  const f = fixture({dropDuring: 'service', drops: 1, staleConnected: true});
+  const robot = await RoombaSetup.connect(f.bluetooth);
+  assert.equal(f.counters.connections, 2);
+  assert.deepEqual(f.writes, []);
+  robot.close();
+});
+
 test('untested firmware and product IDs can complete the synthetic setup flow', async () => {
   const f=fixture({firmware:'unverified-model+test-firmware',result:payload({productId:'0x31'})});
   const robot=await RoombaSetup.connect(f.bluetooth);
@@ -101,6 +155,7 @@ test('missing firmware metadata is rejected without control writes', async () =>
   for(const firmware of ['',null,123]) {
     const f=fixture({firmware});
     await assert.rejects(RoombaSetup.connect(f.bluetooth),/firmware version/);
+    assert.equal(f.counters.connections, 1);
     assert.deepEqual(f.writes,[]); assert.equal(f.device.gatt.connected,false);
   }
 });
@@ -108,6 +163,7 @@ test('missing firmware metadata is rejected without control writes', async () =>
 test('missing Matter setup characteristics are rejected without control writes', async () => {
   const f=fixture({missingCharacteristic:0x23});
   await assert.rejects(RoombaSetup.connect(f.bluetooth),/Missing setup characteristic/);
+  assert.equal(f.counters.connections, 1);
   assert.deepEqual(f.writes,[]); assert.equal(f.device.gatt.connected,false);
 });
 
